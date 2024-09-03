@@ -1,37 +1,63 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import generics
+from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .RandomForest import RandomForestClassifierModel
 from .DecisionTree import DecisionTreeClassifierModel
 from .serializers import WineSerializer
+import pickle
 
-random_forest = RandomForestClassifierModel()
-random_forest.fit_model()
+with open('D:/Work/Work/NLP/ML/Wine_Quality_Classification/Website/backend/api/Random_forest_model.pkl', 'rb') as file:
+    random_forest = pickle.load(file)
+
 
 decision_tree = DecisionTreeClassifierModel()
-decision_tree.fit_model()
 
 # Create your views here.
-class RandomForestPredict(generics.RetrieveAPIView):
+class RandomForestPredict(generics.CreateAPIView):
     serializer_class = WineSerializer
-    lookup_field = 'random_forest'
     permission_classes = [AllowAny]
 
-    def get_queryset(self):
-        x_pred = self.kwargs.get(lookup_field)
-        y_pred = random_forest.predict(x_pred) 
-        return y_pred
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        features = [
+            data['fixed_acidity'],
+            data['volatile_acidity'],
+            data['citric_acid'],
+            data['residual_sugar'],
+            data['chlorides'],
+            data['free_sulfur_dioxide'],
+            data['total_sulfur_dioxide'],
+            data['density'],
+            data['pH'],
+            data['sulphates'],
+            data['alcohol']
+        ]
+        prediction = random_forest.predict([features])
+        return Response({'quality': prediction[0]})
 
 
-class DecisionTreePredict(generics.RetrieveAPIView):
+class DecisionTreePredict(generics.CreateAPIView):
     serializer_class = WineSerializer
-    lookup_field = 'random_forest'
     permission_classes = [AllowAny]
 
-    def get_queryset(self):
-        x_pred = self.kwargs.get(lookup_field)
-        y_pred = random_forest.predict(x_pred) 
-        return y_pred
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        features = [
+            data['fixed_acidity'],
+            data['volatile_acidity'],
+            data['citric_acid'],
+            data['residual_sugar'],
+            data['chlorides'],
+            data['free_sulfur_dioxide'],
+            data['total_sulfur_dioxide'],
+            data['density'],
+            data['pH'],
+            data['sulphates'],
+            data['alcohol']
+        ]
+        prediction = decision_tree.predict([features])
+        return Response({'quality': prediction[0]})
 
     
